@@ -1,209 +1,240 @@
-# 🤖 ReAct Agent (Reasoning + Acting)
+# ReAct Agent Chat API
 
-A powerful AI agent that combines reasoning with action using the ReAct pattern. This agent can think through problems step-by-step and use external tools to gather information and solve complex tasks.
+A FastAPI-powered ReAct (Reasoning and Acting) Agent that uses OpenAI's API to automatically determine which tools to use for calculation, web search, and text analysis.
 
-## 🎯 What is ReAct?
+## Features
 
-ReAct (Reasoning + Acting) is a pattern where AI agents:
-1. **Think** - Reason about what to do next
-2. **Act** - Use tools to gather information or perform actions  
-3. **Observe** - Process the results
-4. **Repeat** - Continue until the task is complete
+- **Intelligent Agent**: Automatically determines which tools to use based on your message
+- **Multiple Tools**: Calculator, web search (with SerpAPI), and text analyzer
+- **Simple API**: Single chat endpoint for all interactions
+- **Interactive Documentation**: Automatic Swagger/OpenAPI docs
+- **Environment Configuration**: Easy setup with environment variables
 
-## 🛠️ Available Tools
+## Tools Available (Used Automatically)
 
-### 1. 🧮 Calculator
-- Safely evaluates mathematical expressions
-- Supports: `+`, `-`, `*`, `/`, `**`, `()`, and math functions
+The agent will automatically choose the appropriate tools based on your message:
 
-### 2. 🌐 Web Search  
-- **SerpAPI** (when configured): Real-time Google search results
-- **Fallback**: Built-in knowledge base for common questions
-- Covers: Geography, science facts, current date, etc.
+1. **Calculator**: For mathematical expressions and calculations
+2. **Web Search**: For real-time information or knowledge base queries  
+3. **Text Analyzer**: For text statistics and analysis
 
-### 3. 📝 Text Analyzer
-- Word count, sentence count, character analysis
-- Longest word detection
-- Readability metrics
-- Case analysis (uppercase/lowercase)
+## Quick Start
 
-## 🚀 Quick Start
+### 1. Installation
 
-### 1. Install Dependencies
 ```bash
+# Clone the repository
+git clone <your-repo-url>
+cd memory-mcp-agent
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Set OpenAI API Key
-Edit `react_agent.py` and replace:
-```python
-api_key = "your-openai-api-key-here"
+### 2. Environment Setup
+
+Create a `.env` file in the project root:
+
+```env
+# Required
+OPENAI_API_KEY=your-openai-api-key-here
+
+# Optional (for real-time web search)
+SERPAPI_KEY=your-serpapi-key-here
 ```
 
-### 3. Run the Agent
+**Getting API Keys:**
+- **OpenAI API Key**: Get from [OpenAI Platform](https://platform.openai.com/api-keys)
+- **SerpAPI Key**: Get free key from [SerpAPI](https://serpapi.com/) (optional)
+
+### 3. Running the Server
+
+```bash
+# Run with uvicorn
+uvicorn main:app --reload
+
+# Or run directly
+python main.py
+```
+
+The server will start at `http://localhost:8000`
+
+### 4. Access the API
+
+- **Interactive Docs**: `http://localhost:8000/docs` (Swagger UI)
+- **Alternative Docs**: `http://localhost:8000/redoc`
+- **Health Check**: `http://localhost:8000/`
+
+## API Endpoints
+
+### POST `/chat`
+Chat with the ReAct agent. The agent automatically determines which tools to use.
+
+**Request:**
+```json
+{
+  "message": "What is 25 * 17 + 48 and what is the capital of France?",
+  "max_iterations": 10
+}
+```
+
+**Response:**
+```json
+{
+  "message": "What is 25 * 17 + 48 and what is the capital of France?",
+  "response": "25 * 17 + 48 equals 473. The capital of France is Paris."
+}
+```
+
+### GET `/`
+Health check and configuration status
+
+## Usage Examples
+
+### Using cURL
+
+```bash
+# Chat with the agent
+curl -X POST "http://localhost:8000/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is 15 * 7 and what is AI?"}'
+
+# Mathematical question
+curl -X POST "http://localhost:8000/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Calculate the square root of 144 plus 10"}'
+
+# Search question
+curl -X POST "http://localhost:8000/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is the capital of Japan?"}'
+```
+
+### Using Python Requests
+
+```python
+import requests
+
+# Chat with the agent
+response = requests.post(
+    "http://localhost:8000/chat",
+    json={"message": "Calculate 25% of 200 and explain what percentages are"}
+)
+print(response.json())
+
+# Another example
+response = requests.post(
+    "http://localhost:8000/chat", 
+    json={"message": "Analyze this text: FastAPI is amazing for building APIs"}
+)
+print(response.json())
+```
+
+### Using JavaScript/Fetch
+
+```javascript
+// Chat with the agent
+const response = await fetch('http://localhost:8000/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    message: 'What is the speed of light and how long to travel 1 million meters?'
+  })
+});
+const data = await response.json();
+console.log(data);
+```
+
+## Example Messages
+
+The agent will automatically determine which tools to use:
+
+### Mathematical Questions
+- "What is 15% of 750?"
+- "Calculate the area of a circle with radius 5"  
+- "What is 2^10 + 5*3?"
+
+### Knowledge Questions
+- "What is the capital of Japan?"
+- "What is artificial intelligence?"
+- "Tell me about the speed of light"
+
+### Text Analysis
+- "Analyze this text: 'FastAPI is a modern, fast web framework'"
+- "Count the words in: 'Hello world, this is a test'"
+
+### Complex Multi-tool Questions
+- "Calculate 25% of 200 and tell me about percentages"
+- "What is the capital of France and calculate the time difference if it's 3 PM there?"
+- "Search for Python tutorials and analyze this text: 'Python is great'"
+
+### Web Search (requires SerpAPI)
+- "What are the latest developments in AI?"
+- "Current weather in New York"
+- "Latest news about space exploration"
+
+## Project Structure
+
+```
+.
+├── main.py              # FastAPI application (simplified)
+├── react_agent.py       # Original ReAct agent implementation
+├── requirements.txt     # Python dependencies
+├── .env                # Environment variables (create this)
+├── README.md           # This file
+└── .gitignore          # Git ignore rules
+```
+
+## How It Works
+
+1. **Send a message** to `/chat`
+2. **Agent analyzes** your message using ReAct reasoning
+3. **Agent determines** which tools are needed (calculator, search, text analyzer)
+4. **Agent executes** the appropriate tools automatically
+5. **Agent returns** a comprehensive response
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENAI_API_KEY` | Yes | Your OpenAI API key |
+| `SERPAPI_KEY` | No | SerpAPI key for real-time web search |
+
+### Default Behavior
+
+- **Without SerpAPI**: Uses built-in knowledge base for searches
+- **With SerpAPI**: Performs real-time web searches  
+- **Max Iterations**: Default is 10, configurable per request
+
+## Error Handling
+
+The API includes comprehensive error handling:
+
+- **500**: Server errors (missing API keys, agent failures)
+- **422**: Validation errors (invalid request format)
+
+## Development
+
+### Running in Development Mode
+
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Testing the Original CLI Version
+
+The original command-line interface is still available:
+
 ```bash
 python react_agent.py
 ```
 
-## 🔧 Enhanced Web Search Setup (Optional)
+## Support
 
-For real-time web search capabilities:
-
-### Option 1: Automatic Setup
-```bash
-python setup_serpapi.py
-```
-
-### Option 2: Manual Setup
-1. Get free API key from [SerpAPI](https://serpapi.com/) (100 searches/month free)
-2. Set environment variable:
-   ```bash
-   # Linux/Mac
-   export SERPAPI_KEY='your-serpapi-key-here'
-   
-   # Windows
-   set SERPAPI_KEY=your-serpapi-key-here
-   ```
-
-## 💡 Example Questions
-
-### 📊 Mathematics
-```
-"What is 25 * 17 + 48?"
-"Calculate 15% of 250"
-"What's the square root of 144?"
-```
-
-### 🌍 Geography & Facts
-```
-"What is the capital of Nicaragua?"
-"What's the speed of light?"
-"What's the boiling point of water?"
-```
-
-### 📰 Current Information (requires SerpAPI)
-```
-"Latest news about artificial intelligence"
-"Who won the 2024 Nobel Prize in Physics?"
-"Current weather in Tokyo"
-```
-
-### 📝 Text Analysis
-```
-"Analyze this text: 'The quick brown fox jumps over the lazy dog.'"
-"Count words in: 'Hello world, this is a test sentence.'"
-```
-
-### 🧮 Complex Multi-Tool Tasks
-```
-"Calculate 20% tip on $87.50 and tell me about tipping culture"
-"What's 15 * 23, and what's the capital of the country with that area code?"
-```
-
-## 🏗️ Project Structure
-
-```
-ReAct/
-├── react_agent.py      # Main ReAct agent implementation
-├── setup_serpapi.py    # SerpAPI configuration helper
-├── requirements.txt    # Python dependencies
-└── README.md          # This file
-```
-
-## 🔍 How It Works
-
-### 1. The ReAct Loop
-```python
-while not_finished:
-    # 1. Model thinks about what to do
-    thought = model.generate_thought(question, context)
-    
-    # 2. Model decides on an action
-    action = model.choose_action(available_tools)
-    
-    # 3. Tool executes and returns result
-    observation = tool.execute(action.input)
-    
-    # 4. Add observation to context and continue
-    context.append(observation)
-```
-
-### 2. System Prompt Structure
-The agent is taught to follow this exact format:
-```
-Thought: [reasoning about what to do next]
-Action: [tool_name: tool_input]
-Observation: [tool result will be inserted here]
-... (repeat as needed)
-Thought: [final reasoning]
-Final Answer: [the answer to the question]
-```
-
-### 3. Tool Integration
-Each tool is registered with:
-- **Name**: How the model calls it
-- **Function**: The actual implementation
-- **Description**: What it does (for the model)
-
-## 🎛️ Customization
-
-### Adding New Tools
-```python
-def my_custom_tool(input_text: str) -> str:
-    """Your tool implementation."""
-    # Process input_text
-    return "Tool result"
-
-# Register the tool
-agent.add_tool("my_tool", my_custom_tool, "Description of what it does")
-```
-
-### Modifying Behavior
-- **Temperature**: Adjust creativity (0 = deterministic, 1 = creative)
-- **Max iterations**: Prevent infinite loops
-- **Model**: Switch between `gpt-4o-mini`, `gpt-3.5-turbo`, etc.
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**"No OpenAI API key"**
-- Make sure you've set your OpenAI API key in the code
-
-**"SerpAPI not working"**
-- Check your API key with `python setup_serpapi.py`
-- Verify you have remaining search credits
-
-**"Calculator errors"**
-- The calculator uses `eval()` safely - only math operations allowed
-- Complex expressions might need parentheses
-
-**"Agent loops infinitely"**
-- Increase `max_iterations` if needed
-- Check if the model is getting confused by ambiguous questions
-
-## 🎓 Learning Objectives
-
-This project teaches:
-- **ReAct pattern implementation**
-- **LLM prompt engineering**
-- **Tool integration patterns**
-- **Safe code execution**
-- **API integration**
-- **Error handling in AI systems**
-
-## 🔗 Resources
-
-- [ReAct Paper](https://arxiv.org/abs/2210.03629)
-- [OpenAI API Docs](https://platform.openai.com/docs)
-- [SerpAPI Documentation](https://serpapi.com/search-api)
-
-## 📄 License
-
-This project is for educational purposes. Please ensure you comply with the terms of service for OpenAI and SerpAPI.
-
----
-
-**Happy building! 🚀**
-
-Try asking complex questions that require multiple tools - watch how the agent reasons through the problem step by step! 
+For issues and questions:
+1. Check the interactive documentation at `/docs`
+2. Review the example usage above
+3. Ensure environment variables are properly set
+4. Check the health endpoint at `/` for configuration status
